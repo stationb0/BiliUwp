@@ -1,5 +1,7 @@
 # 哔哩哔哩第三方 UWP 客户端（复活版）
 
+[![Build](https://github.com/stationb0/BiliUwp/actions/workflows/build.yml/badge.svg)](https://github.com/stationb0/BiliUwp/actions/workflows/build.yml)
+
 > 基于 [xiaoyaocz/biliuwp](https://github.com/xiaoyaocz/biliuwp)（MIT License，2023 年前后停更）的**复活分叉**：
 > 原项目的大部分客户端私有接口已失效，这里把视频详情、播放地址、搜索、排行榜、分区、番剧播放等
 > 迁移到了目前仍可用的网页端接口，并修复了一批运行时报错。
@@ -36,6 +38,21 @@ ARM 包（HoloLens 一代 / Windows 10 Mobile）可以这样出：
 ```powershell
 & $msbuild 'BiliBili.sln' /p:Configuration=Release /p:Platform=ARM /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload
 ```
+
+> 打 x86 的 appx 时如果报 `APPX3104`（项目里 `AppxBundlePlatforms` 写死为 arm），
+> 加 `/p:AppxBundle=Never /p:AppxBundlePlatforms=x86` 即可。
+
+## 安装 Release 包
+
+Release 里的包是**未签名**的（GitHub Actions 无法替你持有证书），所以：
+
+- **PC（Win10/11）**：推荐直接用 `deploy.ps1`（松散注册，不需要证书），见上。
+- **HoloLens / 旧设备**：用 VS2019 远程部署，或者先用自己的侧载证书签名再装 —— 仓库提供了 `tools/sign-package.ps1`：
+  ```powershell
+  .\tools\sign-package.ps1 -Package ".\AppPackages\...\xxx.appxbundle" -Thumbprint "<证书指纹>"
+  ```
+  注意：包清单里的 `Publisher` 必须和证书 `Subject` 一致，否则签名/安装会失败。
+- 直接用系统双击安装未签名包是**不行**的，会提示证书不受信任。
 
 ## 说明
 

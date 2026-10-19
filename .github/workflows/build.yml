@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.platform }} / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ x86, ARM ]
+        configuration: [ Release ]
+    # ARM 需要 .NET Native 工具链，GitHub 托管 runner 上偶尔缺组件；失败不影响 x86 产物
+    continue-on-error: ${{ matrix.platform == 'ARM' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore
+        run: msbuild BiliBili.sln /restore /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /m /v:m
+
+      - name: Build
+        run: >
+          msbuild BiliBili.sln
+          /p:Configuration=${{ matrix.configuration }}
+          /p:Platform=${{ matrix.platform }}
+          /p:AppxBundle=Never
+          /p:UapAppxPackageBuildMode=SideLoadOnly
+          /p:AppxPackageSigningEnabled=false
+          /m /v:m
+
+      - name: Upload appx artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BiliBiliUWP-${{ matrix.platform }}-${{ matrix.configuration }}
+          path: |
+            BiliBili.UWP/AppPackages/**/*.appx
+            BiliBili.UWP/AppPackages/**/*.appxbundle
+            BiliBili.UWP/AppPackages/**/*.appxupload
+          if-no-files-found: warn
+          retention-days: 14

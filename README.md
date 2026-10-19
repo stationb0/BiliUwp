@@ -5,6 +5,10 @@
 > 基于 [xiaoyaocz/biliuwp](https://github.com/xiaoyaocz/biliuwp)（MIT License，2023 年前后停更）的**复活分叉**：
 > 原项目的大部分客户端私有接口已失效，这里把视频详情、播放地址、搜索、排行榜、分区、番剧播放等
 > 迁移到了目前仍可用的网页端接口，并修复了一批运行时报错。
+>
+> 本项目**非哔哩哔哩官方客户端**，与哔哩哔哩官方无关；仅供学习与怀旧交流，请勿用于商业用途。
+> 原作品版权归原作者 [xiaoyaocz](https://github.com/xiaoyaocz) 所有，修改部分同样以 MIT 发布，
+> 详细声明见 [NOTICE.md](NOTICE.md)。
 
 ## 目前可用的功能
 

@@ -1,0 +1,59 @@
+# BiliUwp revive
+
+> 哔哩哔哩第三方 UWP 客户端「复活版」：基于 xiaoyaocz/biliuwp（MIT，2023 年前后停更）的修改分叉，
+> 把已失效的客户端私有接口迁移到当前仍可用的网页端接口。非哔哩哔哩官方客户端，仅供学习与怀旧交流。
+
+## 关键事实
+
+- 平台：UWP（Windows 10 16299+ / Windows 11），支持 x86、ARM（HoloLens 一代、Windows 10 Mobile）
+- 语言：C# / XAML（.NET Native）
+- 仓库：https://github.com/stationb0/BiliUwp
+- 最近验证日期：2026-10-19（B 站接口随时可能再次变更，使用前请以当日实际表现为准）
+- 许可：MIT（原作品版权归 xiaoyaocz 所有，修改部分同样 MIT）
+- 上游：https://github.com/xiaoyaocz/biliuwp
+
+## 文档
+
+- README.md：项目简介、功能列表、编译与安装方式
+- README_维护说明.md：**接口迁移记录**（哪个接口失效、换成了什么、为什么），维护本项目最重要的文档
+- NOTICE.md：原作品署名、免责声明、依赖与参考
+- docs/RELEASE_v3.10.2-revive.md：发布说明
+
+## 接口现状（截至 2026-10-19）
+
+| 功能 | 使用的接口 | 状态 |
+| --- | --- | --- |
+| 视频详情 / 相关 / 标签 | `api.bilibili.com/x/web-interface/view/detail` | 可用 |
+| 评论列表（含二级） | `api.bilibili.com/x/v2/reply`（带签名，失败回退无签名） | 可用 |
+| 普通视频播放 / 清晰度 | `api.bilibili.com/x/player/playurl`（fnval=16 DASH / fnval=1 MP4） | 可用，高清需登录 cookie |
+| 番剧播放 / 清晰度 | `api.bilibili.com/pgc/player/web/playurl` | 可用，高清需登录 cookie |
+| 番剧信息 | `api.bilibili.com/pgc/view/app/season` | 可用（电视端 appkey） |
+| 搜索 | `api.bilibili.com/x/web-interface/search/type` | 可用，需 buvid3/buvid4 |
+| 排行榜 | `api.bilibili.com/x/web-interface/ranking/v2` | 可用，需 buvid3/buvid4；分区 202/85 返回 -400 |
+| 分区视频列表 | `api.bilibili.com/x/web-interface/newlist` | 可用（仅顶级分区；pn 参数被服务端忽略，需本地分页） |
+| 分区/频道订阅 | `app.bilibili.com/x/channel/*` | **已失效（404）**，页面已隐藏该区块 |
+| 首页推荐流 | `app.bilibili.com/x/v2/feed/index` | 可用但返回结构已变，部分字段是动态 id |
+
+## 登录态说明
+
+- 客户端接口用 `access_key`（本项目持久化到设置）
+- 网页端接口认 `SESSDATA` cookie；`Helper/BiliWebSession.cs` 会用 access_key 走 passport sso 换取并持久化，
+  否则播放清晰度被限制在匿名上限（DASH 480P / MP4 720P）
+- 所有网页请求复用同一个 `HttpBaseProtocolFilter`，并预取 `buvid3/buvid4` 规避 `-352` 风控
+
+## 编译
+
+```powershell
+msbuild BiliBili.sln /p:Configuration=Release /p:Platform=x86 /restore /m
+# ARM（HoloLens / W10M）
+msbuild BiliBili.sln /p:Configuration=Release /p:Platform=ARM /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload /m
+# 一键部署（免签名，松散注册）
+powershell -ExecutionPolicy Bypass -File .\deploy.ps1
+```
+
+## 已知坑
+
+- x86 打 appx 时项目里 `AppxBundlePlatforms=arm` 会导致 `APPX3104`，需加 `/p:AppxBundle=Never /p:AppxBundlePlatforms=x86`
+- 不要直接注册 `bin\x86\Debug`（缺 Assets/entrypoint/WinMetadata 会启动闪退），用 `deploy.ps1` 或 VS F5
+- 编译中断后若启动闪退，删掉 bin/obj 完整重编
+- Release 包未签名，HoloLens/W10M 侧载需自备证书（见 `tools/sign-package.ps1`）

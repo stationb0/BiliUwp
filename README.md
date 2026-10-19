@@ -19,7 +19,27 @@
 - 搜索：视频 / 番剧 / 影视 / 用户 / 直播 / 专栏
 - 扫码登录、收藏、历史、下载（部分）
 
-详细改动记录见 [README_维护说明.md](README_维护说明.md)。
+详细改动记录见 [README_维护说明.md](README_维护说明.md)。给 AI 检索用的精简索引见 [llms.txt](llms.txt)。
+
+## 接口现状（截至 2026-10-19）
+
+> B 站接口随时可能再次变更，下表只代表 2026-10-19 的实测结果。
+
+| 功能 | 接口 | 状态 |
+| --- | --- | --- |
+| 视频详情 / 相关 / 标签 | `x/web-interface/view/detail` | ✅ 可用 |
+| 评论（含二级） | `x/v2/reply`（带签名，失败回退无签名） | ✅ 可用 |
+| 普通视频播放 / 清晰度 | `x/player/playurl`（DASH `fnval=16` / MP4 `fnval=1`） | ✅ 高清需登录 cookie |
+| 番剧播放 / 清晰度 | `pgc/player/web/playurl` | ✅ 高清需登录 cookie |
+| 番剧信息 | `pgc/view/app/season` | ✅ 可用（电视端 appkey） |
+| 搜索 | `x/web-interface/search/type` | ✅ 需 buvid3/buvid4 |
+| 排行榜 | `x/web-interface/ranking/v2` | ✅ 需 buvid3/buvid4；分区 202/85 返回 -400 |
+| 分区视频列表 | `x/web-interface/newlist` | ✅ 仅顶级分区；`pn` 被服务端忽略，需本地分页 |
+| 频道订阅 | `app.bilibili.com/x/channel/*` | ❌ 已 404，页面已隐藏 |
+| 首页推荐流 | `app.bilibili.com/x/v2/feed/index` | ⚠️ 可用但返回结构变了 |
+
+登录态说明：客户端接口用 `access_key`，网页端接口认 `SESSDATA` cookie；
+`Helper/BiliWebSession.cs` 会自动用 access_key 换取并持久化 cookie，否则播放清晰度只能到匿名上限。
 
 ## 编译 / 部署
 
